@@ -1,0 +1,16 @@
+- name: "Delete group {{ dest_group.metadata.name }}"
+  command: >
+    oc delete group {{ dest_group.metadata.name }}
+  when: >
+    src_group is not defined or
+    src_group == ''
+
+- name: "Remove users from {{ dest_group.metadata.name }}"
+  command: >
+    oc adm groups remove-users {{ dest_group.metadata.name }} {{ rem_users | join( ' ' ) }}
+  vars:
+    rem_users: "{{ dest_group.users | difference( src_group.users | default([]) ) }}"
+  when: >
+    src_group is defined and
+    src_group != '' and
+    rem_users|length > 0

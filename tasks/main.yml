@@ -1,0 +1,31 @@
+- name: Get groups from source cluster
+  command: >
+    oc
+    {% if src_cluster_url is defined %}--server={{src_cluster_url | quote }}{% endif %}
+    {% if src_cluster_token is defined %}--token={{src_cluster_token | quote }}{% endif %}
+    get groups -o json
+  changed_when: false
+  register: get_src_groups
+
+- name: Get groups from destination cluster
+  command: >
+    oc
+    {% if dest_cluster_url is defined %}--server={{dest_cluster_url | quote }}{% endif %}
+    {% if dest_cluster_token is defined %}--token={{dest_cluster_token | quote }}{% endif %}
+    get groups -o json
+  changed_when: false
+  register: get_dest_groups
+    
+- include: add-users-to-group.yml
+  with_items: "{{ get_src_groups.stdout | from_json | json_query('items') }}"
+  vars:
+    dest_group: "{{ get_dest_groups.stdout | from_json | json_query('items[?metadata.name==`' ~ src_group.metadata.name ~ '`]|[0]') }}"
+  loop_control:
+    loop_var: src_group
+
+- include: remove-users-from-group.yml
+  with_items: "{{ get_dest_groups.stdout | from_json | json_query('items') }}"
+  vars:
+    src_group: "{{ get_src_groups.stdout | from_json | json_query('items[?metadata.name==`' ~ dest_group.metadata.name ~ '`]|[0]') }}"
+  loop_control:
+    loop_var: dest_group
