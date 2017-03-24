@@ -1,6 +1,6 @@
 - name: "Create group {{ src_group.metadata.name }}"
   command: >
-    oc adm groups new {{ src_group.metadata.name }} {{ src_group.users | join( ' ' ) }}
+    oc adm groups new {{ src_group.metadata.name }} {{ src_group.users if src_group.users else [] | join( ' ' ) }}
   when: >
     dest_group is not defined or
     dest_group == ''
@@ -9,7 +9,7 @@
   command: >
     oc adm groups add-users {{ src_group.metadata.name }} {{ new_users | join( ' ' ) }}
   vars:
-    new_users: "{{ src_group.users | difference( dest_group.users | default([]) ) }}"
+    new_users: "{{ src_group.users | difference( dest_group.users if dest_groups.users else [] ) }}"
   when: >
     dest_group is defined and
     dest_group != '' and
