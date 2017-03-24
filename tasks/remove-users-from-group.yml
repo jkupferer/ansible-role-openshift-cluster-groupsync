@@ -9,7 +9,7 @@
   command: >
     oc adm groups remove-users {{ dest_group.metadata.name }} {{ rem_users | join( ' ' ) }}
   vars:
-    rem_users: "{{ dest_group.users | difference( src_group.users if src_group.users else [] ) }}"
+    rem_users: "{{ dest_group.users if dest_group.users else [] | difference( src_group.users if src_group.users else [] ) }}"
   when: >
     src_group is defined and
     src_group != '' and
